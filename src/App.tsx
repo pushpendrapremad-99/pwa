@@ -1,13 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
+
 function App() {
   const [count, setCount] = useState(0)
+  const [deferredPrompt, setDeferredPrompt] = useState<null | any>(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstall(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstall(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   return (
     <>
+      {showInstall && (
+        <div style={{ position: 'fixed', bottom: 20, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 1000 }}>
+          <button style={{ padding: '1em 2em', fontSize: '1.2em', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} onClick={handleInstallClick}>
+            Install App
+          </button>
+        </div>
+      )}
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
